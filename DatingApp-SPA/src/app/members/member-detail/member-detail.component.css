@@ -1,0 +1,15 @@
+.img-thumbnail{
+    margin: 1.565rem;
+    width: 85%;
+    height: 85%;
+}
+
+.card-body{
+    padding: 0 1.565rem;
+}
+
+.card-footer{
+    padding: 0.63 0.94rem;
+    background-color: #fff;
+    border-top: none;
+}
