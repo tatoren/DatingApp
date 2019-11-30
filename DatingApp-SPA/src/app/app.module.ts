@@ -26,6 +26,9 @@ import { AltertifyService } from './_services/altertify.service';
 import { UserService } from './_services/user.service';
 import { AuthGuard } from './_guards/auth.guard';
 import { MemberListResolver } from './_resolvers/member-list.resolver';
+import { MemberEditComponent } from './members/member-edit/member-edit.component';
+import { MemberEditResolver } from './_resolvers/member-edit.resolver';
+import { PreventUnsavedChanges } from './_guards/prevent-unsaved-changes.guard';
 
 
 export function tokenGetter() {
@@ -50,7 +53,8 @@ export class CustomHammerConfig extends HammerGestureConfig {
       ListsComponent,
       MessagesComponent,
       MemberCardComponent,
-      MemberDetailComponent
+      MemberDetailComponent,
+      MemberEditComponent
 
    ],
    imports: [
@@ -63,7 +67,7 @@ export class CustomHammerConfig extends HammerGestureConfig {
       NgxGalleryModule,
       JwtModule.forRoot({
          config: {
-               tokenGetter: tokenGetter,
+               tokenGetter,
                whitelistedDomains: ['localhost:5000'],
                blacklistedRoutes: ['localhost:5000/api/auth']
          }
@@ -75,7 +79,9 @@ export class CustomHammerConfig extends HammerGestureConfig {
       AltertifyService,
       UserService,
       AuthGuard,
+      PreventUnsavedChanges,
       MemberDetailResolver,
+      MemberEditResolver,
       MemberListResolver,
       { provide: HAMMER_GESTURE_CONFIG, useClass: CustomHammerConfig }
    ],
