@@ -34,29 +34,30 @@ namespace DatingApp.api.Controllers
          return Ok(usersToReturn);
     }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUser(int id)
-        {
-            var user = await _repo.GetUser(id);
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetUser(int id)
+    {
+        var user = await _repo.GetUser(id);
 
-            var userToReturn = _mapper.Map<UserForDetailedDTO>(user);
-            return Ok(userToReturn);
+        var userToReturn = _mapper.Map<UserForDetailedDTO>(user);
+        return Ok(userToReturn);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateUser(int id, UserForUpdatesDTO userForUpdatesDTO ) 
+    {
+        if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value)){
+            return Unauthorized();
         }
+        var userFromRepo = await _repo.GetUser(id);
+        
+        _mapper.Map(userForUpdatesDTO, userFromRepo);
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, UserForUpdatesDTO userForUpdatesDTO ) 
-        {
-            if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value)){
-                return Unauthorized();
-            }
-            var userFromRepo = await _repo.GetUser(id);
-            _mapper.Map(userForUpdatesDTO, userFromRepo);
-
-            if (await _repo.SaveAll() ){
-                return NoContent();
-            }
-            throw new Exception($"Updating user {id} failed on save.");
-        } 
+        if (await _repo.SaveAll() ){
+            return NoContent();
+        }
+        throw new Exception($"Updating user {id} failed on save.");
+    } 
 
 
     }
