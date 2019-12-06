@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DatingApp.api.Data;
 using DatingApp.api.DTOs;
+using DatingApp.api.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DatingApp.api.Controllers
 {
+    [ServiceFilter(typeof(LogUserActivity))]
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -25,39 +27,49 @@ namespace DatingApp.api.Controllers
         }
 
            [HttpGet]
-    public async Task<IActionResult> GetUsers()
-    {
-         var users = await _repo.GetUsers();
-     
-         var usersToReturn = _mapper.Map<IEnumerable<UsersForListDTO>>(users);
-     
-         return Ok(usersToReturn);
-    }
+        public async Task<IActionResult> GetUsers([FromQuery]UserParams userParams)
+        {
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var userFromRepo = await _repo.GetUser(currentUserId);
+            userParams.UserId = currentUserId;
 
-    [HttpGet("{id}", Name ="GetUser")]
-    public async Task<IActionResult> GetUser(int id)
-    {
-        var user = await _repo.GetUser(id);
+            if (string.IsNullOrEmpty(userParams.Gender)) {
+                userParams.Gender = userFromRepo.Gender == "male" ? "female" : "male";
+            }
 
-        var userToReturn = _mapper.Map<UserForDetailedDTO>(user);
-        return Ok(userToReturn);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(int id, UserForUpdatesDTO userForUpdatesDTO ) 
-    {
-        if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value)){
-            return Unauthorized();
-        }
-        var userFromRepo = await _repo.GetUser(id);
+            var users = await _repo.GetUsers(userParams);
         
-        _mapper.Map(userForUpdatesDTO, userFromRepo);
+            var usersToReturn = _mapper.Map<IEnumerable<UsersForListDTO>>(users);
 
-        if (await _repo.SaveAll() ){
-            return NoContent();
+            Response.AddPagination(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages);
+        
+            return Ok(usersToReturn);
         }
-        throw new Exception($"Updating user {id} failed on save.");
-    } 
+
+        [HttpGet("{id}", Name ="GetUser")]
+        public async Task<IActionResult> GetUser(int id)
+        {
+            var user = await _repo.GetUser(id);
+
+            var userToReturn = _mapper.Map<UserForDetailedDTO>(user);
+            return Ok(userToReturn);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, UserForUpdatesDTO userForUpdatesDTO ) 
+        {
+            if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value)){
+                return Unauthorized();
+            }
+            var userFromRepo = await _repo.GetUser(id);
+            
+            _mapper.Map(userForUpdatesDTO, userFromRepo);
+
+            if (await _repo.SaveAll() ){
+                return NoContent();
+            }
+            throw new Exception($"Updating user {id} failed on save.");
+        } 
 
 
     }
